@@ -42,6 +42,7 @@ toolversion=0.1
 #  Add ability to merge mods together into new package
 #  Add update.zip generation
 #  Add ability to package backup as a return-to-stock update.zip
+#  Add jar mod support
 
 platform='unknown'
 unamestr=$(uname)
@@ -62,7 +63,7 @@ if [ "$unamestr" == "Linux" ]; then
 		wget -O $1 $2
 	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to Auto-Mod Version: $version by MAD Industries ///"
+	echo "/// Welcome to AutoMod Version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
 	echo "Operating System Detected: Linux     |"
 elif [ "$unamestr" == "Darwin" ]; then
@@ -80,7 +81,7 @@ elif [ "$unamestr" == "Darwin" ]; then
 		curl -o $1 $2
 	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to Auto-Mod version: $version by MAD Industries ///"
+	echo "/// Welcome to AutoMod version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
 	echo "Operating System Detected: Mac OSX   |"
 else
@@ -106,6 +107,15 @@ error () {
 }
 
 start_func () {
+	if [ ! -d ./Tools ]; then
+		echo -e $WHITE"It appears this is the first time you are running AutoMod.";  $kclr;
+		echo -e "Press enter to download the required tools and themes package or 'q' to quit..";
+		read INPUT
+		case $INPUT in
+			[qQ]) echo -e "Quitting.."; exit 0 ;;
+			*) setenv ;;
+		esac
+	fi
     if [[ $platform == "linux" ]]; then
         if [[ -f ./Tools/linux/curl ]]; then
             update_check
@@ -119,15 +129,6 @@ start_func () {
 	if [ -f ./SystemUI.apk ]; then
 		rm -rf "./SystemUI.apk"
 	fi
-	if [ ! -d ./Tools ]; then
-		echo -e $WHITE"It appears this is the first time you are running Auto-Mod.";  $kclr;
-		echo -e "Press enter to download the required tools and themes package or 'q' to quit..";
-		read INPUT
-		case $INPUT in
-			[qQ]) echo -e "Quitting.."; exit 0 ;;
-			*) setenv ;;
-		esac
-	fi
 	if [ ! -d ./Backup ]; then
 		echo -e $WHITE"It appears you do not yet have a baseline backup created.";  $kclr;
 		backup_stock
@@ -136,7 +137,7 @@ start_func () {
 }
 
 setenv () {
-	echo -e "Preparing Auto-Mod environment.."
+	echo -e "Preparing AutoMod environment.."
     if [ ! -d ./Tools ]; then
         echo -e "Downloading tools.."
         download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
@@ -172,9 +173,9 @@ update_check () {
 	echo -e "Checking for script updates.."
 	web=$(curl -s https://raw.github.com/MADindustries/automod/master/version/script)
 	if [[ $version == $web ]]; then
-		echo -e "You are running the most current version of Auto-Mod."
+		echo -e "You are running the most current version of AutoMod."
 	elif [[ $version < $web ]]; then
-		echo -e "An update for Auto-Mod is available. Would you like to download it now?"
+		echo -e "An update for AutoMod is available. Would you like to download it now?"
 		printf "Type 'y' to update now or 'n' to continue without updating:"
 		read INPUT
 		case $INPUT in
@@ -183,14 +184,14 @@ update_check () {
 			*) echo -e "Not a valid entry."; update_check ;;
 		esac
 	elif [[ $version > $web ]]; then
-		echo -e "Why are you using a newer version than MAD Industries?? :P"
+		echo -e "Why are you using a newer version than MAD Industries? :P"
 	fi
 #	echo -e "Checking for theme updates.."
 #	theme=$(curl -s https://raw.github.com/MADindustries/automod/master/version/theme)
 #	if [[ $themeversion == $theme ]]; then
 #		echo -e "You have the latest themes already installed."
 #	elif [[ $themeversion < $theme ]]; then
-#		echo -e "There are new or updated themes available for Auto-Mod. Would you like to download them now?"
+#		echo -e "There are new or updated themes available for AutoMod. Would you like to download them now?"
 #		printf "Type 'y' to update now or 'n' to continue without updating:"
 #		read INPUT
 #		case $INPUT in
@@ -206,7 +207,7 @@ update_check () {
     if [[ $toolversion == $tool ]]; then
         echo -e "You have the latest tools already installed."
     elif [[ $toolversion < $tool ]]; then
-        echo -e "There are new or updated tools available for Auto-Mod. Would you like to download them now?"
+        echo -e "There are new or updated tools available for AutoMod. Would you like to download them now?"
         printf "Type 'y' to update now or 'n' to continue without updating:"
     read INPUT
     case $INPUT in
@@ -221,7 +222,7 @@ update_check () {
 
 update () {
 	if [[ $1 == "script" ]]; then
-		echo -e "Updating Auto-Mod.."
+		echo -e "Updating AutoMod.."
 		cp ./autotheme.sh ./autotheme.bak
 		download autotheme.sh https://raw.github.com/MADindustries/automod/master/autotheme.sh
 		echo -e "Update Complete. Restarting script.."
@@ -234,7 +235,7 @@ update () {
 #		./Tools/linux/7za x -y ./Themes.zip
 #		rm -rf "./__MACOSX"
 #		echo -e "..Done"
-#		main_menu
+		main_menu
     elif [[ $1 == "tools" ]]; then
         echo -e "Downloading tools.."
         download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
@@ -271,7 +272,7 @@ main_menu () {
 	echo -e ""
 	echo -e " 1) "$WHITE"Apply a mod directly to a device"; $kclr;
 	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod"; $kclr;
-	echo -e " 3) "$WHITE"Install a new mod package into Auto-Mod"; $kclr;
+	echo -e " 3) "$WHITE"Install a new mod package into AutoMod"; $kclr;
 	echo -e " 4) "$WHITE"Restore from a previous backup"; $kclr;
 	echo -e " 5) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
 	echo -e " 6) "$WHITE"Check for updates"; $kclr;
@@ -305,12 +306,12 @@ install_mod () {
 		if [[ -f $pack ]]; then
 			name=${pack#"./"}
 			name=${name%".zip"}
-			echo -e "Installing Theme '$name'."
+			echo -e "Installing mod '$name'."
 			../Tools/linux/7za x -y $pack
 			if [[ -d ./__MACOSX ]]; then
 				rm -rf ./__MACOSX
 			fi
-			mv ./$name ../Themes/$name
+			mv ./$name ../Mods/$name
 			rm $pack
 			echo -e "Install complete."
 		else
@@ -330,9 +331,9 @@ list_mods () {
 	echo -e "--------------------------------------------------------------------------------------------"
 	echo -e ""; $kclr;
 	count=1
-	for folder in ./Themes/*
+	for folder in ./Mods/*
 	do
-		theme=${folder#"./Themes/"}
+		theme=${folder#"./Mods/"}
 		thmlist[$count]=$theme
 		echo -e "	$count) $theme"
 		(( count++ ))
@@ -347,9 +348,9 @@ list_mods () {
 }
 
 parse () {
-	for folder in ./Themes/$1/*
+	for folder in ./Mods/$1/*
 	do
-		if [[ ${folder#"./Themes/$1/"} == "system" ]]; then
+		if [[ ${folder#"./Mods/$1/"} == "system" ]]; then
 			for sub in $folder/*
 			do
 			type=${sub#"$folder/"}
@@ -367,7 +368,7 @@ parse () {
 					done
 				fi
 			done
-		elif [[ ${folder#"./Themes/$1/"} == "data" ]]; then
+		elif [[ ${folder#"./Mods/$1/"} == "data" ]]; then
 			count=0
 			for sub in $folder/app/*
 			do
@@ -445,20 +446,20 @@ decompile () {
 }
 
 replace () {
-	echo -e "Replacing colors.."
+	echo -e "Begin modification routine.."
 	if [[ $framework == true ]]; then
-		echo -e "Theming framework.."
-		cp -r ./Themes/$1/system/framework/framework-res/* ./Decompiled/system/framework/framework-res/
+		echo -e "Modding framework.."
+		cp -r ./Mods/$1/system/framework/framework-res/* ./Decompiled/system/framework/framework-res/
 	fi
 	for app in ${sysapps[@]}
 	do
-		echo -e "Theming $app.."
-		cp -r ./Themes/$1/system/app/$app/* ./Decompiled/system/app/$app/
+		echo -e "Modding $app.."
+		cp -r ./Mods/$1/system/app/$app/* ./Decompiled/system/app/$app/
 	done
 	for app in ${userapps[@]}
 	do
-		echo -e "Theming $app.."
-		cp -r ./Themes/$1/data/app/$app/* ./Decompiled/data/app/$app/
+		echo -e "Modding $app.."
+		cp -r ./Mods/$1/data/app/$app/* ./Decompiled/data/app/$app/
 	done
 	echo -e "..Done"
 	if [ $? != 0 ]; then
@@ -646,6 +647,6 @@ start_func
 
 if [ $? != 0 ]; then
 	echo -e "Unknown error occured."
-	echo -e "Please copy output of script to a file and report to Team EOS."
+	echo -e "Please copy output of script to a file and report to MAD Industries."
 	exit 1
 fi
