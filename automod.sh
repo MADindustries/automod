@@ -302,6 +302,7 @@ main_menu () {
 		packagetools) package tools ;;
 		packagemods) package mods ;;
 		packagemod*) package mod ${INPUT#"packagemod "} ;;
+		forceupdate*) update ${INPUT#"forceupdate "} ;;
 		[qQ]) exit 0 ;;
 		*) echo -e "Not a valid entry."; pressanykey; main_menu ;;
 	esac
