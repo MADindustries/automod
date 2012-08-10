@@ -11,11 +11,12 @@
 # Daneshm90 for writing apk manager which was an inspiration for this tool
 # JF for smali/baksmali
 #
-# A special thanks to my beta testers Nusince and "Super Human Tester: Xhinde".
+# A special thanks to my beta testers Nusince and "Super Human Tester: Xhinde". (AutoTheme)
+# Thanks to invisiblek for updated linux binaries. (AutoMod)
 #
-version=1.1
+version=1.3
 themeversion=0.4
-toolversion=0.1
+toolversion=0.2
 #
 # ------------------------------------------
 # Changelog
@@ -32,6 +33,7 @@ toolversion=0.1
 # 1.0: Private Beta, Theme engine now accepts .thm packages made for this script
 # 1.1: Extended linux support, Bugfixes (Thanks Xhinde!)
 # 1.2: Rebranded to automod with the intent of supporting more than just themes in the future
+# 1.3: Added support for creating update.zip files from mods
 #
 #
 # ------------------------------------------
@@ -40,7 +42,7 @@ toolversion=0.1
 #  Add "safe" mod package support (device-specific packages)
 #  Add multi-device backups
 #  Add ability to merge mods together into new package
-#  Add update.zip generation
+#  Extend update.zip generation (dynamic scripts)
 #  Add ability to package backup as a return-to-stock update.zip
 #  Add jar mod support
 #  Add support for ROM zip files (modding without a device)
@@ -276,7 +278,8 @@ main_menu () {
 	echo -e $WHITE"This script will apply a mod to any device currently connected over adb."
 	echo -e "Please select a option below. (note: "$RED"Your device may reboot"$WHITE" upon completion)"; $kclr;
 	echo -e ""
-	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot)"; $kclr;
+	echo -e ""
+	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot, may not be supported by your device)"; $kclr;
 	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod (device specific)"; $kclr;
 	echo -e " 3) "$WHITE"Install a new mod package into AutoMod"; $kclr;
 	echo -e " 4) "$WHITE"Restore from a previous backup"; $kclr;
