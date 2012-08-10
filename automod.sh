@@ -400,6 +400,8 @@ backup () {
 }
 
 pull_ui () {
+	echo -e "Waiting for device.."
+	adb wait-for-device
 	echo -e "Pulling files.."
 	#Note: we always pull framework because apktool must install it to decompile SystemUI.apk
 	adb pull /system/framework/framework-res.apk ./Pulled/system/framework/framework-res.apk
@@ -500,6 +502,8 @@ recompile () {
 }
 
 push () {
+	echo -e "Waiting for device"
+	adb wait-for-device
 	adb remount
 	if [[ $framework == true ]]; then
 		echo -e "Pushing framework.."
@@ -526,12 +530,14 @@ push () {
 create_zip () {
 	echo -e "Adding script..."
 	mkdir ./Recompiled/META-INF
-	cp ./Tools/META-INF/* ./Recompiled/META-INF/
+	cp -r ./Tools/META-INF/* ./Recompiled/META-INF/
 	cd ./Tools/$platform
 	echo -e "Zipping it all up..."
 	7za a -tzip unsigned.zip ../../Recompiled/*
 	echo -e "Signing & Sealing..."
 	java -jar signapk.jar testkey.x509.pem testkey.pk8 unsigned.zip ../../test.zip
+	rm -rf ./unsigned.zip
+	cd ../../
 	echo -e "I'm Yours!"
 }
 
@@ -566,6 +572,8 @@ restore_check () {
 }
 
 restore () {
+	echo -e "Waiting for device"
+	adb wait-for-device
 	echo -e $RED"Restoring.."; $kclr;
 	adb remount
 	if [[ $1 == bak ]]; then
