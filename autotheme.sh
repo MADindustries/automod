@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# EOS Auto-Theme
+# AutoMod
 #
 # MAD Industries, Team EOS
 #
 # -------------------------
 # Credits
 # -------------------------
-# Brut.all for apktool which is used in autotheme and is a constant necessity for any theme dev
+# Brut.all for apktool which is used in automod and is a constant necessity for any theme dev
 # Daneshm90 for writing apk manager which was an inspiration for this tool
 # JF for smali/baksmali
 #
@@ -31,6 +31,17 @@ toolversion=0.1
 # 0.9: Added firt-run code so script is redistributable without content 
 # 1.0: Private Beta, Theme engine now accepts .thm packages made for this script
 # 1.1: Extended linux support, Bugfixes (Thanks Xhinde!)
+# 1.2: Rebranded to automod with the intent of supporting more than just themes in the future
+#
+#
+# ------------------------------------------
+# To-Do
+# ------------------------------------------
+#  Add "safe" mod package support (device-specific packages)
+#  Add multi-device backups
+#  Add ability to merge mods together into new package
+#  Add update.zip generation
+#  Add ability to package backup as a return-to-stock update.zip
 
 platform='unknown'
 unamestr=$(uname)
@@ -51,7 +62,7 @@ if [ "$unamestr" == "Linux" ]; then
 		wget -O $1 $2
 	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to Auto-Theme Version: $version by Team EOS ///"
+	echo "/// Welcome to Auto-Mod Version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
 	echo "Operating System Detected: Linux     |"
 elif [ "$unamestr" == "Darwin" ]; then
@@ -69,7 +80,7 @@ elif [ "$unamestr" == "Darwin" ]; then
 		curl -o $1 $2
 	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to Auto-Theme version: $version by Team EOS ///"
+	echo "/// Welcome to Auto-Mod version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
 	echo "Operating System Detected: Mac OSX   |"
 else
@@ -83,12 +94,12 @@ error () {
 		backup_stock) echo -e $RED"Error encountered while performing stock backup."; $kclr; exit 0 ;;
 		backup) echo -e $RED"Error encountered while performing backup."; $kclr; exit 0 ;;
 		pull_ui) echo -e $RED"Error while pulling files. Make sure your device is connected."; $kclr; pressanykey; main_menu ;;
-		decompile) echo -e $RED"Error encountered while decompiling UI files."; $kclr; exit 0 ;;
+		decompile) echo -e $RED"Error encountered while decompiling files."; $kclr; exit 0 ;;
 		replace) echo -e $RED"Error encountered while replacing colors."; $kclr; exit 0 ;;
-		recompile) echo -e $RED"Error encountered while recompiling UI files."; $kclr; exit 0 ;;
+		recompile) echo -e $RED"Error encountered while recompiling files."; $kclr; exit 0 ;;
 		push) echo -e $RED"Error encountered during push operation."; $kclr; exit 0 ;;
 		reboot) echo -e $RED"Error encountered while attempting to reboot your device."; $kclr; exit 0 ;;
-		restore) echo -e $RED"Error encountered while restoring UI files to device."; $kclr; exit 0 ;;
+		restore) echo -e $RED"Error encountered while restoring files to device."; $kclr; exit 0 ;;
 		"") echo -e $RED"Unknown error occured."; $kclr; exit 0 ;;
 		*) echo -e $RED"Error ""'$1'"" occured during merge."; $kclr; exit 0 ;;
 	esac
@@ -109,7 +120,7 @@ start_func () {
 		rm -rf "./SystemUI.apk"
 	fi
 	if [ ! -d ./Tools ]; then
-		echo -e $WHITE"It appears this is the first time you are running Auto-Theme.";  $kclr;
+		echo -e $WHITE"It appears this is the first time you are running Auto-Mod.";  $kclr;
 		echo -e "Press enter to download the required tools and themes package or 'q' to quit..";
 		read INPUT
 		case $INPUT in
@@ -125,24 +136,24 @@ start_func () {
 }
 
 setenv () {
-	echo -e "Preparing Auto-Theme environment.."
+	echo -e "Preparing Auto-Mod environment.."
     if [ ! -d ./Tools ]; then
         echo -e "Downloading tools.."
-        download Tools.zip http://eos.fractalincorporated.com/Tools.zip
+        download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
         echo -e "Extracting tools.."
         unzip -o ./Tools.zip
         rm -rf "./__MACOSX"
         rm ./Tools.zip
     fi
     PATH=./Tools/$platform:$PATH
-	if [ ! -d ./Themes ]; then
-		echo -e "Downloading themes.."
-		download Themes.zip http://eos.fractalincorporated.com/Themes.zip
-		echo -e "Extracting themes.."
-		./Tools/linux/7za x -y ./Themes.zip
-		rm -rf "./__MACOSX"
-		rm ./Themes.zip
-	fi
+#	if [ ! -d ./Themes ]; then
+#		echo -e "Downloading themes.."
+#		download Themes.zip http://cloud.github.com/downloads/MADindustries/automod/Themes.zip
+#		echo -e "Extracting themes.."
+#		./Tools/linux/7za x -y ./Themes.zip
+#		rm -rf "./__MACOSX"
+#		rm ./Themes.zip
+#	fi
 	echo -e "Setup complete. Checking for backups.."
 }
 
@@ -159,11 +170,11 @@ pressanykey () {
 
 update_check () {
 	echo -e "Checking for script updates.."
-	web=$(curl -s http://eos.fractalincorporated.com/version)
+	web=$(curl -s https://raw.github.com/MADindustries/automod/master/version/script)
 	if [[ $version == $web ]]; then
-		echo -e "You are running the most current version of Auto-Theme."
+		echo -e "You are running the most current version of Auto-Mod."
 	elif [[ $version < $web ]]; then
-		echo -e "An update for Auto-Theme is available. Would you like to download it now?"
+		echo -e "An update for Auto-Mod is available. Would you like to download it now?"
 		printf "Type 'y' to update now or 'n' to continue without updating:"
 		read INPUT
 		case $INPUT in
@@ -172,30 +183,30 @@ update_check () {
 			*) echo -e "Not a valid entry."; update_check ;;
 		esac
 	elif [[ $version > $web ]]; then
-		echo -e "Why are you using a newer version than Team EOS??"
+		echo -e "Why are you using a newer version than MAD Industries?? :P"
 	fi
-	echo -e "Checking for theme updates.."
-	theme=$(curl -s http://eos.fractalincorporated.com/theme)
-	if [[ $themeversion == $theme ]]; then
-		echo -e "You have the latest themes already installed."
-	elif [[ $themeversion < $theme ]]; then
-		echo -e "There are new or updated themes available for Auto-Theme. Would you like to download them now?"
-		printf "Type 'y' to update now or 'n' to continue without updating:"
-		read INPUT
-		case $INPUT in
-			[yY]) update "themes" ;;
-			[nN]) ;;
-			*) echo -e "Not a valid entry."; update_check ;;
-		esac
-	elif [[ $themeversion > $theme ]]; then
-		echo -e "Why are you using newer themes than Team EOS?"
-	fi
+#	echo -e "Checking for theme updates.."
+#	theme=$(curl -s https://raw.github.com/MADindustries/automod/master/version/theme)
+#	if [[ $themeversion == $theme ]]; then
+#		echo -e "You have the latest themes already installed."
+#	elif [[ $themeversion < $theme ]]; then
+#		echo -e "There are new or updated themes available for Auto-Mod. Would you like to download them now?"
+#		printf "Type 'y' to update now or 'n' to continue without updating:"
+#		read INPUT
+#		case $INPUT in
+#			[yY]) update "themes" ;;
+#			[nN]) ;;
+#			*) echo -e "Not a valid entry."; update_check ;;
+#		esac
+#	elif [[ $themeversion > $theme ]]; then
+#		echo -e "Why are you using newer themes than MAD Industries? :P"
+#	fi
     echo -e "Checking for tool updates.."
-    tool=$(curl -s http://eos.fractalincorporated.com/tool)
+    tool=$(curl -s https://raw.github.com/MADindustries/automod/master/version/tools)
     if [[ $toolversion == $tool ]]; then
         echo -e "You have the latest tools already installed."
     elif [[ $toolversion < $tool ]]; then
-        echo -e "There are new or updated tools available for Auto-Theme. Would you like to download them now?"
+        echo -e "There are new or updated tools available for Auto-Mod. Would you like to download them now?"
         printf "Type 'y' to update now or 'n' to continue without updating:"
     read INPUT
     case $INPUT in
@@ -204,29 +215,29 @@ update_check () {
         *) echo -e "Not a valid entry."; update_check ;;
     esac
     elif [[ $toolversion > $theme ]]; then
-        echo -e "Why are you using newer tools than Team EOS?"
+        echo -e "Why are you using newer tools than MAD Industries? :P"
     fi
 }
 
 update () {
 	if [[ $1 == "script" ]]; then
-		echo -e "Updating Auto-Theme.."
+		echo -e "Updating Auto-Mod.."
 		cp ./autotheme.sh ./autotheme.bak
-		download autotheme.sh http://eos.fractalincorporated.com/autotheme.sh
+		download autotheme.sh https://raw.github.com/MADindustries/automod/master/autotheme.sh
 		echo -e "Update Complete. Restarting script.."
 		bash autotheme.sh
 		exit 0
 	elif [[ $1 == "themes" ]]; then
-		echo -e "Downloading themes.."
-		download Themes.zip http://eos.fractalincorporated.com/Themes.zip
-		echo -e "Extracting themes.."
-		./Tools/linux/7za x -y ./Themes.zip
-		rm -rf "./__MACOSX"
-		echo -e "..Done"
-		main_menu
+#		echo -e "Downloading themes.."
+#		download Themes.zip http://cloud.github.com/downloads/MADindustries/automod/Themes.zip
+#		echo -e "Extracting themes.."
+#		./Tools/linux/7za x -y ./Themes.zip
+#		rm -rf "./__MACOSX"
+#		echo -e "..Done"
+#		main_menu
     elif [[ $1 == "tools" ]]; then
         echo -e "Downloading tools.."
-        download Tools.zip http://eos.fractalincorporated.com/Tools.zip
+        download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
         echo -e "Extracting tools.."
         ./Tools/linux/7za x -y ./Tools.zip
         rm -rf "./__MACOSX"
@@ -255,37 +266,39 @@ backup_stock () {
 
 main_menu () {
 	echo -e ""
-	echo -e $WHITE"This script will apply a theme to any current EOS ICS nightly."
-	echo -e "Please select a option below. (note: "$RED"Your device will reboot"$WHITE" upon completion)"; $kclr;
+	echo -e $WHITE"This script will apply a mod to any device currently connected to adb."
+	echo -e "Please select a option below. (note: "$RED"Your device may reboot"$WHITE" upon completion)"; $kclr;
 	echo -e ""
-	echo -e " 1) "$WHITE"Flash a theme to device"; $kclr;
-	echo -e " 2) "$WHITE"Install a new theme package into Auto-Theme"; $kclr;
-	echo -e " 3) "$WHITE"Restore from a previous backup"; $kclr;
-	echo -e " 4) "$WHITE"Perform stock backup (use this if you have flashed a new nightly since last use)"; $kclr;
-	echo -e " 5) "$WHITE"Check for updates"; $kclr;
-	echo -e " 6) "$WHITE"Quit"; $kclr;
+	echo -e " 1) "$WHITE"Apply a mod directly to a device"; $kclr;
+	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod"; $kclr;
+	echo -e " 3) "$WHITE"Install a new mod package into Auto-Mod"; $kclr;
+	echo -e " 4) "$WHITE"Restore from a previous backup"; $kclr;
+	echo -e " 5) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
+	echo -e " 6) "$WHITE"Check for updates"; $kclr;
+	echo -e " 7) "$WHITE"Quit"; $kclr;
 	echo -e ""
 	echo -e $YELLOW"--------------------------------------------------------------------------------------------"; $kclr;
 	echo -e ""
 	printf "Please choose an option:";
 	read INPUT
 	case $INPUT in
-		1) list_themes ;;
-		2) install_theme ;;
-		3) restore_check ;;
-		4) backup_stock ;;
-		5) update_check; main_menu ;;
-		6) exit 0 ;;
+		1) list_mods flash ;;
+		2) list_mods zip ;;
+		3) install_mod ;;
+		4) restore_check ;;
+		5) backup_stock ;;
+		6) update_check; main_menu ;;
+		7) exit 0 ;;
 		[qQ]) exit 0 ;;
 		*) echo -e "Not a valid entry."; pressanykey; main_menu ;;
 	esac
 }
 
-install_theme () {
+install_mod () {
 	mkdir ./Install
 	cd ./Install
 	echo -e "A folder has been created in the current directory called 'Install'."
-	echo -e "Please place any .thm packages inside that folder for installation and press any key to continue."
+	echo -e "Please place any .mod packages inside that folder for installation and press any key to continue."
 	pressanykey
 	for pack in ./*
 	do
@@ -310,10 +323,10 @@ install_theme () {
 	echo -e "Returning to main menu.."; main_menu;
 }
 
-list_themes () {
+list_mods () {
 	echo -e $YELLOW""
 	echo -e "--------------------------------------------------------------------------------------------"
-	echo -e "/// Available Themes ///"
+	echo -e "/// Available Mods ///"
 	echo -e "--------------------------------------------------------------------------------------------"
 	echo -e ""; $kclr;
 	count=1
@@ -329,7 +342,7 @@ list_themes () {
 	read INPUT
 	case $INPUT in
 		[qQ]) main_menu ;;
-		*) merge ${thmlist[$INPUT]} ;;
+		*) merge ${thmlist[$INPUT]} $1;;
 	esac
 }
 
@@ -367,7 +380,7 @@ parse () {
 }
 
 backup_check () {
-	echo -e $WHITE"You are about to change your theme to $1."
+	echo -e $WHITE"You are about to modify your device. [$1]."
 	echo -e "This will overwrite any apks referenced within the '$1' folder."
 	echo -e ""
 	echo -e $RED"Would you like to create a full backup of all referenced apps before modifying?"
@@ -616,7 +629,11 @@ merge () {
 	decompile
 	replace $1
 	recompile
-	push $1
+	if [[ $2 == "flash" ]]; then
+		push
+	elif [[ $2 == "zip" ]]; then
+		create_zip $1
+	fi
 	rm -rf ./Recompiled
 	exit 0
 }
