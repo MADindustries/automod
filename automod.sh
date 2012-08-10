@@ -133,6 +133,12 @@ start_func () {
 	main_menu
 }
 
+kill_DStore () {
+	if [[ $platform == "osx" ]]; then
+		find . -name '*.DS_Store' -type f -delete
+	fi
+}
+
 setenv () {
 	echo -e "Preparing AutoMod environment.."
     if [ ! -d ./Tools ]; then
@@ -152,6 +158,7 @@ setenv () {
 #		rm -rf "./__MACOSX"
 #		rm ./Themes.zip
 #	fi
+	kill_DStore
 	echo -e "Setup complete. Checking for backups.."
 }
 
@@ -232,6 +239,7 @@ update () {
 #		./Tools/$platform/7za x -y ./Themes.zip
 #		rm -rf "./__MACOSX"
 #		echo -e "..Done"
+		kill_DStore
 		main_menu
     elif [[ $1 == "tools" ]]; then
         echo -e "Downloading tools.."
@@ -240,6 +248,7 @@ update () {
         ./Tools/$platform/7za x -y ./Tools.zip
         rm -rf "./__MACOSX"
         echo -e "..Done"
+		kill_DStore
         main_menu
 	fi
 }
@@ -307,6 +316,7 @@ install_mod () {
 			../Tools/$platform/7za x -y $pack
 			if [[ -d ./__MACOSX ]]; then
 				rm -rf ./__MACOSX
+				kill_DStore
 			fi
 			mv ./$name ../Mods/$name
 			rm $pack
@@ -439,6 +449,7 @@ decompile () {
 		java -jar  apktool.jar d "../../Pulled/data/app/$app.apk" "../../Decompiled/data/app/$app"
 	done
 	cd ../../
+	kill_DStore
 	if [ $? != 0 ]; then
 		error "decompile"
 	fi
@@ -460,6 +471,7 @@ replace () {
 		echo -e "Modding $app.."
 		cp -r ./Mods/$1/data/app/$app/* ./Decompiled/data/app/$app/
 	done
+	kill_DStore
 	echo -e "..Done"
 	if [ $? != 0 ]; then
 		error "replace"
@@ -467,6 +479,7 @@ replace () {
 }
 
 recompile () {
+	kill_DStore
 	cd ./Tools/$platform
 	if [[ $framework == true ]]; then
 		echo -e "Recompiling framework.. (may take a while)"
@@ -531,6 +544,7 @@ create_zip () {
 	echo -e "Adding script..."
 	mkdir ./Recompiled/META-INF
 	cp -r ./Tools/META-INF/* ./Recompiled/META-INF/
+	kill_DStore
 	cd ./Tools/$platform
 	echo -e "Zipping it all up..."
 	7za a -tzip unsigned.zip ../../Recompiled/*
@@ -581,6 +595,7 @@ restore () {
 		adb push ./Backup/SystemUI.bak /system/app/SystemUI.apk
 	elif [[ $1 == full ]]; then
 		cd ./Backup
+		kill_DStore
 		if [[ -d ./Pulled ]]; then
 			rm -rf ./Pulled
 		fi
