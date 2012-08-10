@@ -117,11 +117,7 @@ start_func () {
 			*) setenv ;;
 		esac
 	fi
-    if [[ $platform == "linux" ]]; then
-        if [[ -f ./Tools/linux/curl ]]; then
-            update_check
-        fi
-    else
+    if [[ -f ./Tools/$platform/curl ]]; then
         update_check
     fi
 	if [ -f ./framework-res.apk ]; then
@@ -152,7 +148,7 @@ setenv () {
 #		echo -e "Downloading themes.."
 #		download Themes.zip http://cloud.github.com/downloads/MADindustries/automod/Themes.zip
 #		echo -e "Extracting themes.."
-#		./Tools/linux/7za x -y ./Themes.zip
+#		./Tools/$platform/7za x -y ./Themes.zip
 #		rm -rf "./__MACOSX"
 #		rm ./Themes.zip
 #	fi
@@ -233,7 +229,7 @@ update () {
 #		echo -e "Downloading themes.."
 #		download Themes.zip http://cloud.github.com/downloads/MADindustries/automod/Themes.zip
 #		echo -e "Extracting themes.."
-#		./Tools/linux/7za x -y ./Themes.zip
+#		./Tools/$platform/7za x -y ./Themes.zip
 #		rm -rf "./__MACOSX"
 #		echo -e "..Done"
 		main_menu
@@ -241,7 +237,7 @@ update () {
         echo -e "Downloading tools.."
         download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
         echo -e "Extracting tools.."
-        ./Tools/linux/7za x -y ./Tools.zip
+        ./Tools/$platform/7za x -y ./Tools.zip
         rm -rf "./__MACOSX"
         echo -e "..Done"
         main_menu
@@ -308,7 +304,7 @@ install_mod () {
 			name=${pack#"./"}
 			name=${name%".zip"}
 			echo -e "Installing mod '$name'."
-			../Tools/linux/7za x -y $pack
+			../Tools/$platform/7za x -y $pack
 			if [[ -d ./__MACOSX ]]; then
 				rm -rf ./__MACOSX
 			fi
@@ -397,7 +393,7 @@ backup_check () {
 
 backup () {
 	pull_ui
-	./Tools/linux/7za a -mx=9 ./Backup/Backup Pulled
+	./Tools/$platform/7za a -mx=9 ./Backup/Backup Pulled
 	if [ $? != 0 ]; then
 		error "backup"
 	fi
@@ -580,7 +576,7 @@ restore () {
 		if [[ -d ./Pulled ]]; then
 			rm -rf ./Pulled
 		fi
-		../Tools/linux/7za x -y ./Backup.7z
+		../Tools/$platform/7za x -y ./Backup.7z
 		for folder in ./Pulled/*
 		do
 			type=${folder#"./Pulled/"}
