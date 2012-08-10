@@ -299,9 +299,24 @@ main_menu () {
 		5) backup_stock ;;
 		6) update_check; main_menu ;;
 		7) exit 0 ;;
+		packagetools) package tools ;;
+		packagemods) package mods ;;
+		packagemod*) package mod ${INPUT#"packagemod "} ;;
 		[qQ]) exit 0 ;;
 		*) echo -e "Not a valid entry."; pressanykey; main_menu ;;
 	esac
+}
+
+package () {
+	kill_DStore
+	if [[ $1 == "tools" ]]; then
+		./Tools/$platform/7za a -tzip Tools.zip Tools
+	elif [[ $1 == "mods" ]]; then
+		./Tools/$platform/7za a -tzip Mods.zip Mods
+	elif [[ $1 == "mod" ]]; then
+		./Tools/$platform/7za a -tzip $2.mod ./Mods/$2
+	fi
+	main_menu
 }
 
 install_mod () {
@@ -314,7 +329,7 @@ install_mod () {
 	do
 		if [[ -f $pack ]]; then
 			name=${pack#"./"}
-			name=${name%".zip"}
+			name=${name%".mod"}
 			echo -e "Installing mod '$name'."
 			../Tools/$platform/7za x -y $pack
 			if [[ -d ./__MACOSX ]]; then
