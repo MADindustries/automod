@@ -14,7 +14,7 @@
 # A special thanks to my beta testers Nusince and "Super Human Tester: Xhinde". (AutoTheme)
 # Thanks to invisiblek for updated linux binaries. (AutoMod)
 #
-version=1.3
+version=1.4
 themeversion=0.4
 toolversion=0.2
 #
@@ -34,6 +34,7 @@ toolversion=0.2
 # 1.1: Extended linux support, Bugfixes (Thanks Xhinde!)
 # 1.2: Rebranded to automod with the intent of supporting more than just themes in the future
 # 1.3: Added support for creating update.zip files from mods
+# 1.4: Extended backup function with flashable backups
 #
 #
 # ------------------------------------------
@@ -43,7 +44,6 @@ toolversion=0.2
 #  Add multi-device backups
 #  Add ability to merge mods together into new package
 #  Extend update.zip generation (dynamic scripts)
-#  Add ability to package backup as a return-to-stock update.zip
 #  Add jar mod support
 #  Add support for ROM zip files (modding without a device)
 
@@ -422,7 +422,7 @@ backup_check () {
 	printf "(note: This will overwrite any previous backups) [Y/N]:"; $kclr;
 	read INPUT
 	case $INPUT in
-		[yY])backup ;;
+		[yY])backup $1 ;;
 		[nN])pull_ui ;;
 			*) echo -e "Not a valid entry."; pressanykey; backup_check ;;
 	esac
@@ -434,6 +434,13 @@ backup () {
 	if [ $? != 0 ]; then
 		error "backup"
 	fi
+	printf "Would you like to create a flashable zip file out of the backup? [Y/N]:"; $kclr;
+	read INPUT
+	case $INPUT in
+		[yY])create_zip backup $1 ;;
+		[nN]) ;;
+			*) echo -e "Not a valid entry. Skipping.."; pressanykey ;;
+	esac
 }
 
 pull_ui () {
@@ -568,18 +575,41 @@ push () {
 }
 
 create_zip () {
+	if [[ $1 == "backup" ]]; then
+		if [[ ! -d ./Backup ]]; then
+			mkdir ./Backup
+			mkdir ./Backup/Flashable
+		elif [[ ! -d ./Backup/Flashable ]]; then
+			mkdir ./Backup/Flashable
+		fi
+		directory='Pulled'
+		instance=$(date +%Y%m%d-%H%M)
+		zipname="Backup/Flashable/backup-$2-$instance"
+		message='You can find your backup in the /Backup/Flashable folder'
+	elif [[ $1 == "mod" ]]; then
+		if [[ ! -d ./Completed ]]; then
+			mkdir ./Completed
+		fi
+		directory='Recompiled'
+		zipname="./Completed/$2"
+		message='You can find your flashable zip in the /Completed folder'
+	fi
 	echo -e "Adding script..."
-	mkdir ./Recompiled/META-INF
-	cp -r ./Tools/META-INF/* ./Recompiled/META-INF/
+	mkdir ./$directory/META-INF
+	cp -r ./Tools/META-INF/* ./$directory/META-INF/
 	kill_DStore
 	cd ./Tools/$platform
 	echo -e "Zipping it all up..."
-	7za a -tzip unsigned.zip ../../Recompiled/*
+	./7za a -tzip unsigned.zip ../../$directory/*
 	echo -e "Signing & Sealing..."
-	java -jar signapk.jar testkey.x509.pem testkey.pk8 unsigned.zip ../../test.zip
+	java -jar signapk.jar testkey.x509.pem testkey.pk8 unsigned.zip ../../$zipname.zip
 	rm -rf ./unsigned.zip
 	cd ../../
+	if [[ -d ./Pulled/META-INF ]]; then
+		rm -rf ./Pulled/META-INF
+	fi
 	echo -e "I'm Yours!"
+	echo -e "$message"
 }
 
 restore_check () {
@@ -692,7 +722,7 @@ merge () {
 	if [[ $2 == "flash" ]]; then
 		push
 	elif [[ $2 == "zip" ]]; then
-		create_zip $1
+		create_zip mod $1
 	fi
 	rm -rf ./Recompiled
 	exit 0
