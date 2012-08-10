@@ -246,9 +246,17 @@ update () {
     elif [[ $1 == "tools" ]]; then
         echo -e "Downloading tools.."
         download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
+		if [[ -f Tools.zip ]]; then
+			echo -e "Removing old tools.."
+			cp ./Tools/$platform/7za ./7za
+			rm -rf ./Tools
+		fi
         echo -e "Extracting tools.."
-        ./Tools/$platform/7za x -y ./Tools.zip
+        ./7za x -y ./Tools.zip
         rm -rf "./__MACOSX"
+		echo -e "Cleaning up.."
+		rm -rf 7za
+		rm -rf Tools.zip
         echo -e "..Done"
 		kill_DStore
         main_menu
