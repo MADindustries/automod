@@ -43,6 +43,7 @@ toolversion=0.1
 #  Add update.zip generation
 #  Add ability to package backup as a return-to-stock update.zip
 #  Add jar mod support
+#  Add support for ROM zip files (modding without a device)
 
 platform='unknown'
 unamestr=$(uname)
@@ -96,7 +97,7 @@ error () {
 		backup) echo -e $RED"Error encountered while performing backup."; $kclr; exit 0 ;;
 		pull_ui) echo -e $RED"Error while pulling files. Make sure your device is connected."; $kclr; pressanykey; main_menu ;;
 		decompile) echo -e $RED"Error encountered while decompiling files."; $kclr; exit 0 ;;
-		replace) echo -e $RED"Error encountered while replacing colors."; $kclr; exit 0 ;;
+		replace) echo -e $RED"Error encountered while replacing files."; $kclr; exit 0 ;;
 		recompile) echo -e $RED"Error encountered while recompiling files."; $kclr; exit 0 ;;
 		push) echo -e $RED"Error encountered during push operation."; $kclr; exit 0 ;;
 		reboot) echo -e $RED"Error encountered while attempting to reboot your device."; $kclr; exit 0 ;;
@@ -109,7 +110,7 @@ error () {
 start_func () {
 	if [ ! -d ./Tools ]; then
 		echo -e $WHITE"It appears this is the first time you are running AutoMod.";  $kclr;
-		echo -e "Press enter to download the required tools and themes package or 'q' to quit..";
+		echo -e "Press enter to download the required tools package or 'q' to quit..";
 		read INPUT
 		case $INPUT in
 			[qQ]) echo -e "Quitting.."; exit 0 ;;
@@ -215,7 +216,7 @@ update_check () {
         [nN]) ;;
         *) echo -e "Not a valid entry."; update_check ;;
     esac
-    elif [[ $toolversion > $theme ]]; then
+    elif [[ $toolversion > $tool ]]; then
         echo -e "Why are you using newer tools than MAD Industries? :P"
     fi
 }
@@ -223,10 +224,10 @@ update_check () {
 update () {
 	if [[ $1 == "script" ]]; then
 		echo -e "Updating AutoMod.."
-		cp ./autotheme.sh ./autotheme.bak
-		download autotheme.sh https://raw.github.com/MADindustries/automod/master/autotheme.sh
+		cp ./automod.sh ./automod.bak
+		download automod.sh https://raw.github.com/MADindustries/automod/master/automod.sh
 		echo -e "Update Complete. Restarting script.."
-		bash autotheme.sh
+		bash automod.sh
 		exit 0
 	elif [[ $1 == "themes" ]]; then
 #		echo -e "Downloading themes.."
@@ -267,11 +268,11 @@ backup_stock () {
 
 main_menu () {
 	echo -e ""
-	echo -e $WHITE"This script will apply a mod to any device currently connected to adb."
+	echo -e $WHITE"This script will apply a mod to any device currently connected over adb."
 	echo -e "Please select a option below. (note: "$RED"Your device may reboot"$WHITE" upon completion)"; $kclr;
 	echo -e ""
-	echo -e " 1) "$WHITE"Apply a mod directly to a device"; $kclr;
-	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod"; $kclr;
+	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot)"; $kclr;
+	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod (device specific)"; $kclr;
 	echo -e " 3) "$WHITE"Install a new mod package into AutoMod"; $kclr;
 	echo -e " 4) "$WHITE"Restore from a previous backup"; $kclr;
 	echo -e " 5) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
@@ -316,7 +317,7 @@ install_mod () {
 			echo -e "Install complete."
 		else
 			name=${pack#"./"}
-			echo -e "'$name' is not a compatible theme package."
+			echo -e "'$name' is not a compatible mod package."
 		fi
 	done
 	cd ../
@@ -333,17 +334,17 @@ list_mods () {
 	count=1
 	for folder in ./Mods/*
 	do
-		theme=${folder#"./Mods/"}
-		thmlist[$count]=$theme
-		echo -e "	$count) $theme"
+		mod=${folder#"./Mods/"}
+		modlist[$count]=$mod
+		echo -e "	$count) $mod"
 		(( count++ ))
 	done
 	echo -e ""
-	printf "Please choose a theme or type 'q' to return to main menu:";
+	printf "Please choose a mod or type 'q' to return to main menu:";
 	read INPUT
 	case $INPUT in
 		[qQ]) main_menu ;;
-		*) merge ${thmlist[$INPUT]} $1;;
+		*) merge ${modlist[$INPUT]} $1;;
 	esac
 }
 
@@ -543,7 +544,7 @@ restore_check () {
 		if [ -f ./Backup/Backup.7z ]; then
 			echo -e $WHITE"Choose a backup to restore from:"
 			echo -e "	1) Basic Backup (from first run, likely stock, only includes framework & SystemUI)"
-			echo -e "	2) Full Backup (from most recent use, includes all themed apps)"
+			echo -e "	2) Full Backup (from most recent use, includes all files modified by this tool)"
 			echo -e "	3) Cancel restore"; $kclr;
 			printf ":"
 			read INPUT
