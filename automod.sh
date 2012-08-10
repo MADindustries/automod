@@ -527,7 +527,15 @@ push () {
 }
 
 create_zip () {
-	echo -e "Not yet supported"
+	echo -e "Adding script..."
+	mkdir ./Recompiled/META-INF
+	cp ./Tools/META-INF/* ./Recompiled/META-INF/
+	cd ./Tools/$platform
+	echo -e "Zipping it all up..."
+	7za a -tzip unsigned.zip ../../Recompiled/*
+	echo -e "Signing & Sealing..."
+	java -jar signapk.jar testkey.x509.pem testkey.pk8 unsigned.zip ../../test.zip
+	echo -e "I'm Yours!"
 }
 
 restore_check () {
