@@ -152,14 +152,6 @@ setenv () {
         rm ./Tools.zip
     fi
     PATH=./Tools/$platform:$PATH
-#	if [ ! -d ./Themes ]; then
-#		echo -e "Downloading themes.."
-#		download Themes.zip http://cloud.github.com/downloads/MADindustries/automod/Themes.zip
-#		echo -e "Extracting themes.."
-#		./Tools/$platform/7za x -y ./Themes.zip
-#		rm -rf "./__MACOSX"
-#		rm ./Themes.zip
-#	fi
 	kill_DStore
 	echo -e "Setup complete. Checking for backups.."
 }
@@ -192,22 +184,6 @@ update_check () {
 	elif [[ $version > $web ]]; then
 		echo -e "Why are you using a newer version than MAD Industries? :P"
 	fi
-#	echo -e "Checking for theme updates.."
-#	theme=$(curl -s https://raw.github.com/MADindustries/automod/master/version/theme)
-#	if [[ $themeversion == $theme ]]; then
-#		echo -e "You have the latest themes already installed."
-#	elif [[ $themeversion < $theme ]]; then
-#		echo -e "There are new or updated themes available for AutoMod. Would you like to download them now?"
-#		printf "Type 'y' to update now or 'n' to continue without updating:"
-#		read INPUT
-#		case $INPUT in
-#			[yY]) update "themes" ;;
-#			[nN]) ;;
-#			*) echo -e "Not a valid entry."; update_check ;;
-#		esac
-#	elif [[ $themeversion > $theme ]]; then
-#		echo -e "Why are you using newer themes than MAD Industries? :P"
-#	fi
     echo -e "Checking for tool updates.."
     tool=$(curl -s https://raw.github.com/MADindustries/automod/master/version/tools)
     if [[ $toolversion == $tool ]]; then
