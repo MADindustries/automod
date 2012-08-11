@@ -269,7 +269,7 @@ main_menu () {
 		7) backup stckdevice ;;
 		8) update_check; main_menu ;;
 		9) exit 0 ;;
-		10) update ${INPUT#"forceupdate "} ;;
+		10) update script ;;
 		packagetools) package tools ;;
 		packagemods) package mods ;;
 		packagemod*) package mod ${INPUT#"packagemod "} ;;
