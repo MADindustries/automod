@@ -14,7 +14,7 @@
 # A special thanks to my beta testers Nusince and "Super Human Tester: Xhinde". (AutoTheme)
 # Thanks to invisiblek for updated linux binaries. (AutoMod)
 #
-version=1.4
+version=1.5
 themeversion=0.4
 toolversion=0.2
 #
@@ -35,6 +35,7 @@ toolversion=0.2
 # 1.2: Rebranded to automod with the intent of supporting more than just themes in the future
 # 1.3: Added support for creating update.zip files from mods
 # 1.4: Extended backup function with flashable backups
+# 1.5: Added support for ROM Install files (now possible to mod without a device), cleaned LOTS of code :)
 #
 #
 # ------------------------------------------
@@ -45,7 +46,6 @@ toolversion=0.2
 #  Add ability to merge mods together into new package
 #  Extend update.zip generation (dynamic scripts)
 #  Add jar mod support
-#  Add support for ROM zip files (modding without a device)
 
 platform='unknown'
 unamestr=$(uname)
@@ -130,7 +130,7 @@ start_func () {
 	fi
 	if [ ! -d ./Backup ]; then
 		echo -e $WHITE"It appears you do not yet have a baseline backup created.";  $kclr;
-		backup_stock
+		backup stckdevice
 	fi
 	main_menu
 }
@@ -242,7 +242,6 @@ update () {
 #		rm -rf "./__MACOSX"
 #		echo -e "..Done"
 		kill_DStore
-		main_menu
     elif [[ $1 == "tools" ]]; then
         echo -e "Downloading tools.."
         download Tools.zip http://cloud.github.com/downloads/MADindustries/automod/Tools.zip
@@ -259,26 +258,8 @@ update () {
 		rm -rf Tools.zip
         echo -e "..Done"
 		kill_DStore
-        main_menu
 	fi
-}
-
-backup_stock () {
-	echo -e $WHITE"I will now attempt to create a preliminary backup of your basic UI."
-	printf "Please make sure your device is connected and press any key to continue.."; $kclr;
-	wait
-	if [[ -f ./Backup/framework-res.apk ]]; then
-		rm ./Backup/framework-res.apk
-	fi
-	if [[ -f ./Backup/SystemUI.apk ]]; then
-		rm ./Backup/SystemUI.apk
-	fi
-	adb pull /system/framework/framework-res.apk ./Backup/framework-res.bak
-	adb pull /system/app/SystemUI.apk ./Backup/SystemUI.bak
 	main_menu
-	if [ $? != 0 ]; then
-		error "backup_stock"
-	fi
 }
 
 main_menu () {
@@ -289,28 +270,33 @@ main_menu () {
 	echo -e ""
 	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot, may not be supported by your device)"; $kclr;
 	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod (device specific)"; $kclr;
-	echo -e " 3) "$WHITE"Install a new mod package into AutoMod"; $kclr;
-	echo -e " 4) "$WHITE"Restore from a previous backup"; $kclr;
-	echo -e " 5) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
-	echo -e " 6) "$WHITE"Check for updates"; $kclr;
-	echo -e " 7) "$WHITE"Quit"; $kclr;
+	echo -e " 3) "$WHITE"Use a ROM Install zip + mod to create a flashable zip for another ROM/device"; $kclr;
+	echo -e " 4) "$WHITE"Install a new mod package into AutoMod"; $kclr;
+	echo -e " 5) "$WHITE"Install a new ROM file into AutoMod"; $kclr;
+	echo -e " 6) "$WHITE"Restore from a previous backup"; $kclr;
+	echo -e " 7) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
+	echo -e " 8) "$WHITE"Check for updates"; $kclr;
+	echo -e " 9) "$WHITE"Quit"; $kclr;
 	echo -e ""
 	echo -e $YELLOW"--------------------------------------------------------------------------------------------"; $kclr;
 	echo -e ""
 	printf "Please choose an option:";
 	read INPUT
 	case $INPUT in
-		1) list_mods flash ;;
-		2) list_mods zip ;;
-		3) install_mod ;;
-		4) restore_check ;;
-		5) backup_stock ;;
-		6) update_check; main_menu ;;
-		7) exit 0 ;;
+		1) list_mods flashdevice ;;
+		2) list_mods zipdevice ;;
+		3) list_roms ;;
+		4) install_mod ;;
+		5) install_rom ;;
+		6) restore_check ;;
+		7) backup stckdevice ;;
+		8) update_check; main_menu ;;
+		9) exit 0 ;;
 		packagetools) package tools ;;
 		packagemods) package mods ;;
 		packagemod*) package mod ${INPUT#"packagemod "} ;;
 		forceupdate*) update ${INPUT#"forceupdate "} ;;
+		execfunc*) ${INPUT#"execfunc "} ;;
 		[qQ]) exit 0 ;;
 		*) echo -e "Not a valid entry."; pressanykey; main_menu ;;
 	esac
@@ -345,6 +331,9 @@ install_mod () {
 				rm -rf ./__MACOSX
 				kill_DStore
 			fi
+			if [[ ! -d ../Mods ]]; then
+				mkdir ../Mods
+			fi
 			mv ./$name ../Mods/$name
 			rm $pack
 			echo -e "Install complete."
@@ -358,11 +347,45 @@ install_mod () {
 	echo -e "Returning to main menu.."; main_menu;
 }
 
+install_rom () {
+	mkdir ./Install
+	cd ./Install
+	echo -e "A folder has been created in the current directory called 'Install'."
+	echo -e "Please place any ROM install zips inside that folder for installation and press any key to continue."
+	pressanykey
+	for pack in ./*
+	do
+		name=${pack#"./"}
+		if [[ -f $pack ]]; then
+			name=${name%".zip"}
+			echo -e "Installing ROM '$name'."
+			mkdir $name
+			../Tools/$platform/7za x -y -o./$name ./$pack
+			if [[ -d ./$name/__MACOSX ]]; then
+				rm -rf ./$name/__MACOSX
+				kill_DStore
+			fi
+			if [[ ! -d ../ROMs ]]; then
+				mkdir ../ROMs
+			fi
+			mv ./$name ../ROMs/$name
+			rm $pack
+			echo -e "Install complete."
+		else
+			echo -e "'$name' is not a compatible ROM file."
+		fi
+	done
+	cd ../
+	rm -rf ./Install
+	echo -e "Returning to main menu.."; main_menu;
+}
+
 list_mods () {
 	echo -e $YELLOW""
 	echo -e "--------------------------------------------------------------------------------------------"
 	echo -e "/// Available Mods ///"
 	echo -e "--------------------------------------------------------------------------------------------"
+	echo -e "// Modifying: $2"
 	echo -e ""; $kclr;
 	count=1
 	for folder in ./Mods/*
@@ -377,7 +400,30 @@ list_mods () {
 	read INPUT
 	case $INPUT in
 		[qQ]) main_menu ;;
-		*) merge ${modlist[$INPUT]} $1;;
+		*) merge $1 ${modlist[$INPUT]} $2 ;;
+	esac
+}
+
+list_roms () {
+	echo -e $YELLOW""
+	echo -e "--------------------------------------------------------------------------------------------"
+	echo -e "/// Available ROMs ///"
+	echo -e "--------------------------------------------------------------------------------------------"
+	echo -e ""; $kclr;
+	count=1
+	for folder in ./ROMs/*
+	do
+		rom=${folder#"./ROMs/"}
+		romlist[$count]=$rom
+		echo -e "	$count) $rom"
+		(( count++ ))
+	done
+	echo -e ""
+	printf "Please choose a ROM or type 'q' to return to main menu:";
+	read INPUT
+	case $INPUT in
+		[qQ]) main_menu ;;
+		*) list_mods ziprom ${romlist[$INPUT]} ;;
 	esac
 }
 
@@ -414,39 +460,49 @@ parse () {
 	done
 }
 
-backup_check () {
-	echo -e $WHITE"You are about to modify your device. [$1]."
-	echo -e "This will overwrite any apks referenced within the '$1' folder."
-	echo -e ""
-	echo -e $RED"Would you like to create a full backup of all referenced apps before modifying?"
-	printf "(note: This will overwrite any previous backups) [Y/N]:"; $kclr;
-	read INPUT
-	case $INPUT in
-		[yY])backup $1 ;;
-		[nN])pull_ui ;;
-			*) echo -e "Not a valid entry."; pressanykey; backup_check ;;
-	esac
-}
-
 backup () {
-	pull_ui
-	./Tools/$platform/7za a -mx=9 ./Backup/Backup Pulled
-	if [ $? != 0 ]; then
-		error "backup"
+	if [[ $1 == "check" ]]; then
+		echo -e $WHITE"You are about to modify your device. [$2]."
+		echo -e "This will overwrite any apks referenced within the '$2' folder."
+		echo -e ""
+		echo -e $RED"Would you like to create a full backup of all referenced apps before modifying?"
+		printf "(note: This will overwrite any previous backups) [Y/N]:"; $kclr;
+		read INPUT
+		case $INPUT in
+			[yY])backup $2 ;;
+			[nN])pull_ui ;;
+				*) echo -e "Not a valid entry."; pressanykey; backup check $2;;
+		esac
+	elif [[ $1 == "stckdevice" ]]; then
+		echo -e $WHITE"I will now attempt to create a preliminary backup of your basic UI."
+		printf "Please make sure your device is connected and press any key to continue.."; $kclr;
+		wait
+		if [[ -f ./Backup/framework-res.apk ]]; then
+			rm ./Backup/framework-res.apk
+		fi
+		if [[ -f ./Backup/SystemUI.apk ]]; then
+			rm ./Backup/SystemUI.apk
+		fi
+		adb pull /system/framework/framework-res.apk ./Backup/framework-res.bak
+		adb pull /system/app/SystemUI.apk ./Backup/SystemUI.bak
+		main_menu
+		if [ $? != 0 ]; then
+			error "backup_stock"
+		fi
+	else
+		pull_ui
+		create_zip backup $1
+		echo -e "This backup may be flashed with any current custom recovery to return to your device to its previous state."
+		if [ $? != 0 ]; then
+			error "backup"
+		fi
 	fi
-	printf "Would you like to create a flashable zip file out of the backup? [Y/N]:"; $kclr;
-	read INPUT
-	case $INPUT in
-		[yY])create_zip backup $1 ;;
-		[nN]) ;;
-			*) echo -e "Not a valid entry. Skipping.."; pressanykey ;;
-	esac
 }
 
 pull_ui () {
 	echo -e "Waiting for device.."
 	adb wait-for-device
-	echo -e "Pulling files.."
+	echo -e "Pulling files from device.."
 	#Note: we always pull framework because apktool must install it to decompile SystemUI.apk
 	adb pull /system/framework/framework-res.apk ./Pulled/system/framework/framework-res.apk
 	for app in ${sysapps[@]}
@@ -459,6 +515,43 @@ pull_ui () {
 	done
 	if [ $? != 0 ]; then
 		error "pull_ui"
+	fi
+	echo -e "..Done."
+}
+
+pull_rom () {
+	echo -e "Pulling files from ROM: $1.."
+	#Note: we always pull framework because apktool must install it to decompile SystemUI.apk
+	mkdir -p ./Pulled/system/framework
+	cp -p ./ROMs/$1/system/framework/framework-res.apk ./Pulled/system/framework/framework-res.apk
+	for app in ${sysapps[@]}
+	do
+		if [[ -f ./ROMs/$1/system/app/"$app".apk ]]; then
+			if [[ ! -d ./Pulled/system/app ]]; then
+				mkdir -p ./Pulled/system/app
+			fi
+			cp -p ./ROMs/$1/system/app/"$app".apk ./Pulled/system/app/"$app".apk
+		else
+			echo -e "System app $app not found inside ROM file. Skipping.."
+		fi
+	done
+	if [[ -d ./ROMs/$1/data ]]; then
+		for app in ${userapps[@]}
+		do
+			if [[ -f ./ROMs/$1/data/app/"$app".apk ]]; then
+				if [[ ! -d ./Pulled/data/app ]]; then
+					mkdir -p ./Pulled/data/app
+				fi
+				cp -p ./ROMs/$1/data/app/"$app".apk ./Pulled/data/app/"$app".apk
+			else
+				echo -e "User app $app not found inside ROM file. Skipping.."
+			fi
+		done
+	else
+		echo -e "ROM does not contain any user apps. Skipping.."
+	fi
+	if [ $? != 0 ]; then
+		error "pull_rom"
 	fi
 	echo -e "..Done."
 }
@@ -585,14 +678,14 @@ create_zip () {
 		directory='Pulled'
 		instance=$(date +%Y%m%d-%H%M)
 		zipname="Backup/Flashable/backup-$2-$instance"
-		message='You can find your backup in the /Backup/Flashable folder'
+		message='You can find your backup in the "/Backup/Flashable" folder'
 	elif [[ $1 == "mod" ]]; then
-		if [[ ! -d ./Completed ]]; then
-			mkdir ./Completed
+		if [[ ! -d ./Completed/$3 ]]; then
+			mkdir -p ./Completed/$3
 		fi
 		directory='Recompiled'
-		zipname="./Completed/$2"
-		message='You can find your flashable zip in the /Completed folder'
+		zipname="Completed/$3/$2"
+		message='You can find your flashable zip ('$2') in the "/Completed/'$3'" folder'
 	fi
 	echo -e "Adding script..."
 	mkdir ./$directory/META-INF
@@ -714,24 +807,30 @@ restore () {
 }
 
 merge () {
-	parse $1
-	backup_check $1
+	parse $2
+	if [[ $1 != "ziprom" ]]; then
+		backup check $2
+	elif [[ $1 == "ziprom" ]]; then
+ 		pull_rom $3
+	fi
 	decompile
-	replace $1
+	replace $2
 	recompile
-	if [[ $2 == "flash" ]]; then
+	if [[ $1 == "flashdevice" ]]; then
 		push
-	elif [[ $2 == "zip" ]]; then
-		create_zip mod $1
+	elif [[ $1 == "zipdevice" ]]; then
+		create_zip mod $2 "UnknownDevice"
+	elif [[ $1 == "ziprom" ]]; then
+		create_zip mod $2 $3
 	fi
 	rm -rf ./Recompiled
-	exit 0
+	main_menu
 }
 
 start_func
 
 if [ $? != 0 ]; then
 	echo -e "Unknown error occured."
-	echo -e "Please copy output of script to a file and report to MAD Industries."
+	echo -e "Please copy output of script to a file and report it to MAD Industries."
 	exit 1
 fi
