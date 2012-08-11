@@ -65,6 +65,9 @@ if [ "$unamestr" == "Linux" ]; then
 	download () { 
 		wget -O $1 $2
 	}
+	gettext () {
+		wget -qO- $1
+	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
 	echo "/// Welcome to AutoMod Version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
@@ -83,6 +86,9 @@ elif [ "$unamestr" == "Darwin" ]; then
 	download () {
 		curl -o $1 $2
 	}
+	gettext () {
+		curl -s $1
+	}
 	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
 	echo "/// Welcome to AutoMod version: $version by MAD Industries ///"
 	echo "---------------------------------------------------------------------------------------------"; $kclr;
@@ -95,7 +101,6 @@ echo -e $RED""
 
 error () {
 	case "$1" in
-		backup_stock) echo -e $RED"Error encountered while performing stock backup."; $kclr; exit 0 ;;
 		backup) echo -e $RED"Error encountered while performing backup."; $kclr; exit 0 ;;
 		pull_ui) echo -e $RED"Error while pulling files. Make sure your device is connected."; $kclr; pressanykey; main_menu ;;
 		decompile) echo -e $RED"Error encountered while decompiling files."; $kclr; exit 0 ;;
@@ -119,19 +124,7 @@ start_func () {
 			*) setenv ;;
 		esac
 	fi
-    if [[ -f ./Tools/$platform/curl ]]; then
-        update_check
-    fi
-	if [ -f ./framework-res.apk ]; then
-		rm -rf "./framework-res.apk"
-	fi
-	if [ -f ./SystemUI.apk ]; then
-		rm -rf "./SystemUI.apk"
-	fi
-	if [ ! -d ./Backup ]; then
-		echo -e $WHITE"It appears you do not yet have a baseline backup created.";  $kclr;
-		backup stckdevice
-	fi
+    update check
 	main_menu
 }
 
@@ -167,43 +160,41 @@ pressanykey () {
 	echo -e ""
 }
 
-update_check () {
-	echo -e "Checking for script updates.."
-	web=$(curl -s https://raw.github.com/MADindustries/automod/master/version/script)
-	if [[ $version == $web ]]; then
-		echo -e "You are running the most current version of AutoMod."
-	elif [[ $version < $web ]]; then
-		echo -e "An update for AutoMod is available. Would you like to download it now?"
-		printf "Type 'y' to update now or 'n' to continue without updating:"
-		read INPUT
-		case $INPUT in
-			[yY]) update "script" ;;
-			[nN]) ;;
-			*) echo -e "Not a valid entry."; update_check ;;
-		esac
-	elif [[ $version > $web ]]; then
-		echo -e "Why are you using a newer version than MAD Industries? :P"
-	fi
-    echo -e "Checking for tool updates.."
-    tool=$(curl -s https://raw.github.com/MADindustries/automod/master/version/tools)
-    if [[ $toolversion == $tool ]]; then
-        echo -e "You have the latest tools already installed."
-    elif [[ $toolversion < $tool ]]; then
-        echo -e "There are new or updated tools available for AutoMod. Would you like to download them now?"
-        printf "Type 'y' to update now or 'n' to continue without updating:"
-    read INPUT
-    case $INPUT in
-        [yY]) update "tools" ;;
-        [nN]) ;;
-        *) echo -e "Not a valid entry."; update_check ;;
-    esac
-    elif [[ $toolversion > $tool ]]; then
-        echo -e "Why are you using newer tools than MAD Industries? :P"
-    fi
-}
-
 update () {
-	if [[ $1 == "script" ]]; then
+	if [[ $1 == "check" ]]; then
+		echo -e "Checking for script updates.."
+		script=$(gettext https://raw.github.com/MADindustries/automod/master/version/script)
+		if [[ $version == $script ]]; then
+			echo -e "You are running the most current version ($version) of AutoMod."
+		elif [[ $version < $script ]]; then
+			echo -e "An update for AutoMod is available. (version $script) Would you like to download it now?"
+			printf "Type 'y' to update now or 'n' to continue without updating:"
+			read INPUT
+			case $INPUT in
+				[yY]) update "script" ;;
+				[nN]) ;;
+				*) echo -e "Not a valid entry."; update check ;;
+			esac
+		elif [[ $version > $script ]]; then
+			echo -e "Why are you using a newer version ($version) than MAD Industries? :P"
+		fi
+	    echo -e "Checking for tool updates.."
+	    tool=$(gettext https://raw.github.com/MADindustries/automod/master/version/tools)
+	    if [[ $toolversion == $tool ]]; then
+	        echo -e "You have the latest tools ($toolversion) already installed."
+	    elif [[ $toolversion < $tool ]]; then
+	        echo -e "There are new or updated tools available for AutoMod. (version $tool) Would you like to download them now?"
+	        printf "Type 'y' to update now or 'n' to continue without updating:"
+	    read INPUT
+	    case $INPUT in
+	        [yY]) update "tools" ;;
+	        [nN]) ;;
+	        *) echo -e "Not a valid entry."; update check ;;
+	    esac
+	    elif [[ $toolversion > $tool ]]; then
+	        echo -e "Why are you using newer tools ($toolversion) than MAD Industries? :P"
+	    fi
+	elif [[ $1 == "script" ]]; then
 		echo -e "Updating AutoMod.."
 		cp ./automod.sh ./automod.bak
 		download automod.sh https://raw.github.com/MADindustries/automod/master/automod.sh
@@ -267,7 +258,7 @@ main_menu () {
 		5) install_rom ;;
 		6) restore_check ;;
 		7) backup stckdevice ;;
-		8) update_check; main_menu ;;
+		8) update check; main_menu ;;
 		9) exit 0 ;;
 		10) update script ;;
 		packagetools) package tools ;;
@@ -451,22 +442,6 @@ backup () {
 			[nN])pull_ui ;;
 				*) echo -e "Not a valid entry."; pressanykey; backup check $2;;
 		esac
-	elif [[ $1 == "stckdevice" ]]; then
-		echo -e $WHITE"I will now attempt to create a preliminary backup of your basic UI."
-		printf "Please make sure your device is connected and press any key to continue.."; $kclr;
-		wait
-		if [[ -f ./Backup/framework-res.apk ]]; then
-			rm ./Backup/framework-res.apk
-		fi
-		if [[ -f ./Backup/SystemUI.apk ]]; then
-			rm ./Backup/SystemUI.apk
-		fi
-		adb pull /system/framework/framework-res.apk ./Backup/framework-res.bak
-		adb pull /system/app/SystemUI.apk ./Backup/SystemUI.bak
-		main_menu
-		if [ $? != 0 ]; then
-			error "backup_stock"
-		fi
 	else
 		pull_ui
 		create_zip backup $1
