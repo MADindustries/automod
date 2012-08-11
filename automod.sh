@@ -235,7 +235,7 @@ main_menu () {
 	echo -e "Please select a option below. (note: "$RED"Your device may reboot"$WHITE" upon completion)"; $kclr;
 	echo -e ""
 	echo -e ""
-	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot, may not be supported by your device)"; $kclr;
+	echo -e " 1) "$WHITE"Apply a mod directly to a device (will reboot, not supported by VZW GS3)"; $kclr;
 	echo -e " 2) "$WHITE"Create a flashable update.zip from a mod (device specific)"; $kclr;
 	echo -e " 3) "$WHITE"Use a ROM Install zip + mod to create a flashable zip for another ROM/device"; $kclr;
 	echo -e " 4) "$WHITE"Install a new mod package into AutoMod"; $kclr;
