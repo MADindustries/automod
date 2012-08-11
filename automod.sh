@@ -253,6 +253,7 @@ main_menu () {
 	echo -e " 7) "$WHITE"Perform stock backup (use this if you have flashed a new ROM since last use)"; $kclr;
 	echo -e " 8) "$WHITE"Check for updates"; $kclr;
 	echo -e " 9) "$WHITE"Quit"; $kclr;
+	echo -e " 10) "$RED"BETA TESTING ONLY: Force update from latest github commit"; $kclr;
 	echo -e ""
 	echo -e $YELLOW"--------------------------------------------------------------------------------------------"; $kclr;
 	echo -e ""
@@ -268,6 +269,7 @@ main_menu () {
 		7) backup stckdevice ;;
 		8) update_check; main_menu ;;
 		9) exit 0 ;;
+		10) update ${INPUT#"forceupdate "} ;;
 		packagetools) package tools ;;
 		packagemods) package mods ;;
 		packagemod*) package mod ${INPUT#"packagemod "} ;;
