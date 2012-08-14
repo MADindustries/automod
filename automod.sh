@@ -40,12 +40,17 @@ toolversion=0.2
 #
 #
 # ------------------------------------------
-# To-Do
+#  To-Do (in no particular order)
 # ------------------------------------------
 #  Add "safe" mod package support (device-specific packages)
+#  Add overwrite handling for mod/rom installs
 #  Add multi-device backups
 #  Add ability to merge mods together into new package
 #  Add jar mod support
+#  Add developer mode/options
+#  Add apk/jar diff function
+#  Add cygwin support
+#  Add sub-mod function (for batch processing multiple versions of a single mod)
 
 platform='unknown'
 unamestr=$(uname)
@@ -245,6 +250,7 @@ main_menu () {
 	echo -e " 8) "$WHITE"Check for updates"; $kclr;
 	echo -e " 9) "$WHITE"Quit"; $kclr;
 	echo -e " 10) "$RED"BETA TESTING ONLY: Force update from latest github commit"; $kclr;
+	echo -e " 11) "$WHITE"Developer Menu"; $kclr;
 	echo -e ""
 	echo -e $YELLOW"--------------------------------------------------------------------------------------------"; $kclr;
 	echo -e ""
@@ -261,6 +267,7 @@ main_menu () {
 		8) update check; main_menu ;;
 		9) exit 0 ;;
 		10) update script ;;
+		11) dev_menu ;;
 		packagetools) package tools ;;
 		packagemods) package mods ;;
 		packagemod*) package mod ${INPUT#"packagemod "} ;;
@@ -271,14 +278,42 @@ main_menu () {
 	esac
 }
 
+dev_menu () {
+	echo -e $YELLOW""
+	echo -e "--------------------------------------------------------------------------------------------"
+	echo -e "/// Developer Menu ///"
+	echo -e "--------------------------------------------------------------------------------------------"
+	echo -e ""; $kclr;
+	echo -e ""
+	echo -e " 1) "$WHITE"Package a mod into a redistributable .mod file"; $kclr;
+	echo -e " 2) "$WHITE"Package all mods into a single file for backup"; $kclr;
+	echo -e " 3) "$WHITE"Return to main menu"; $kclr;
+	echo -e ""
+	echo -e $YELLOW"--------------------------------------------------------------------------------------------"; $kclr;
+	echo -e ""
+	printf "Please choose an option:";
+	read INPUT
+	case $INPUT in
+		1) list_mods packagemod ;;
+		2) package mods ;;
+		3) main_menu ;;
+		[qQ]) exit 0 ;;
+		*) echo -e "Not a valid entry."; pressanykey; dev_menu ;;
+	esac
+}
+
 package () {
 	kill_DStore
 	if [[ $1 == "tools" ]]; then
 		./Tools/$platform/7za a -tzip Tools.zip Tools
 	elif [[ $1 == "mods" ]]; then
-		./Tools/$platform/7za a -tzip Mods.zip Mods
+		printf "Please type a name you would like to use for the backup and press enter:"; $kclr;
+		read INPUT
+		./Tools/$platform/7za a -tzip $INPUT.mod ./Mods/*
+		echo "Backup '$INPUT' has been created."
 	elif [[ $1 == "mod" ]]; then
 		./Tools/$platform/7za a -tzip $2.mod ./Mods/$2
+		echo "Modfile '$2' has been created."
 	fi
 	main_menu
 }
@@ -295,15 +330,15 @@ install_mod () {
 			name=${pack#"./"}
 			name=${name%".mod"}
 			echo -e "Installing mod '$name'."
-			../Tools/$platform/7za x -y $pack
-			if [[ -d ./__MACOSX ]]; then
-				rm -rf ./__MACOSX
-				kill_DStore
-			fi
 			if [[ ! -d ../Mods ]]; then
 				mkdir ../Mods
 			fi
-			mv ./$name ../Mods/$name
+			../Tools/$platform/7za x -y -o../Mods $pack
+			if [[ -d ../__MACOSX ]]; then
+				rm -rf ../__MACOSX
+				kill_DStore
+			fi
+			#mv ./$name ../Mods/$name
 			rm $pack
 			echo -e "Install complete."
 		else
@@ -318,33 +353,31 @@ install_mod () {
 
 install_rom () {
 	mkdir ./Install
-	cd ./Install
 	echo -e "A folder has been created in the current directory called 'Install'."
 	echo -e "Please place any ROM install zips inside that folder for installation and press any key to continue."
 	pressanykey
-	for pack in ./*
+	for pack in ./Install/*
 	do
-		name=${pack#"./"}
 		if [[ -f $pack ]]; then
+			name=${pack#"./Install/"}
+			echo $pack $name
 			name=${name%".zip"}
 			echo -e "Installing ROM '$name'."
-			mkdir $name
-			../Tools/$platform/7za x -y -o./$name ./$pack
-			if [[ -d ./$name/__MACOSX ]]; then
-				rm -rf ./$name/__MACOSX
+			if [[ ! -d ./ROMs ]]; then
+				mkdir ./ROMs
+			fi
+			mkdir -p ./ROMs/$name
+			./Tools/$platform/7za x -y -o./ROMs/$name $pack
+			if [[ -d ./ROMs/$name/__MACOSX ]]; then
+				rm -rf ./ROMs/$name/__MACOSX
 				kill_DStore
 			fi
-			if [[ ! -d ../ROMs ]]; then
-				mkdir ../ROMs
-			fi
-			mv ./$name ../ROMs/$name
 			rm $pack
 			echo -e "Install complete."
 		else
 			echo -e "'$name' is not a compatible ROM file."
 		fi
 	done
-	cd ../
 	rm -rf ./Install
 	echo -e "Returning to main menu.."; main_menu;
 }
@@ -369,7 +402,7 @@ list_mods () {
 	read INPUT
 	case $INPUT in
 		[qQ]) main_menu ;;
-		*) merge $1 ${modlist[$INPUT]} $2 ;;
+		*) [[ $1 == "packagemod" ]] && package mod ${modlist[$INPUT]} || merge $1 ${modlist[$INPUT]} $2 ;;
 	esac
 }
 
