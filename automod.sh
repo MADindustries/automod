@@ -49,12 +49,16 @@ toolversion=0.2
 #  Add jar mod support
 #  Add developer mode/options
 #  Add apk/jar diff function
-#  Add cygwin support
+#  Add cygwin support (in testing)
 #  Add sub-mod function (for batch processing multiple versions of a single mod)
 
 platform='unknown'
 unamestr=$(uname)
+if [[ ${unamestr:0:6} == "CYGWIN" ]]; then
+	unamestr="Linux"
+fi
 kclr='tput sgr0'
+
 echo ""
 if [ "$unamestr" == "Linux" ]; then
 	platform="linux"
@@ -73,10 +77,17 @@ if [ "$unamestr" == "Linux" ]; then
 	gettext () {
 		wget -qO- $1
 	}
-	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to AutoMod Version: $version by MAD Industries ///"
-	echo "---------------------------------------------------------------------------------------------"; $kclr;
-	echo "Operating System Detected: Linux     |"
+	if [[ $1 == '' ]]; then
+		scripted="false"
+		echo -e $YELLOW"---------------------------------------------------------------------------------------------"
+		echo "/// Welcome to AutoMod Version: $version by MAD Industries ///"
+		echo "---------------------------------------------------------------------------------------------"; $kclr;
+		echo "Operating System Detected: Linux     |"
+		echo "------------------------------------/"
+		echo -e $RED""
+	else
+		scripted="true"
+	fi
 elif [ "$unamestr" == "Darwin" ]; then
 	platform="osx"
 	PATH=./Tools/osx:$PATH
@@ -94,15 +105,20 @@ elif [ "$unamestr" == "Darwin" ]; then
 	gettext () {
 		curl -s $1
 	}
-	echo -e $YELLOW"---------------------------------------------------------------------------------------------"
-	echo "/// Welcome to AutoMod version: $version by MAD Industries ///"
-	echo "---------------------------------------------------------------------------------------------"; $kclr;
-	echo "Operating System Detected: Mac OSX   |"
+	if [[ $1 == '' ]]; then
+		scripted="false"
+		echo -e $YELLOW"---------------------------------------------------------------------------------------------"
+		echo "/// Welcome to AutoMod version: $version by MAD Industries ///"
+		echo "---------------------------------------------------------------------------------------------"; $kclr;
+		echo "Operating System Detected: Mac OSX   |"
+		echo "------------------------------------/"
+		echo -e $RED""
+	else
+		scripted="true"
+	fi
 else
 	echo "Operating System Not Recognized. Please report bug along with your OS Version."
 fi
-echo "------------------------------------/"
-echo -e $RED""
 
 error () {
 	case "$1" in
